@@ -36,9 +36,11 @@ import org.springframework.boot.bind.PropertiesConfigurationFactory;
 import org.springframework.boot.env.PropertySourcesLoader;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.ResourceLoaderAware;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
@@ -71,9 +73,10 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
  * @author Christian Dupuis
  * @author Stephane Nicoll
  */
-public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProcessor,
-		BeanFactoryAware, ResourceLoaderAware, EnvironmentAware, ApplicationContextAware,
-		InitializingBean, DisposableBean, PriorityOrdered {
+public class ConfigurationPropertiesBindingPostProcessor
+		implements BeanPostProcessor, BeanFactoryAware, ResourceLoaderAware,
+		EnvironmentAware, ApplicationContextAware, InitializingBean, DisposableBean,
+		ApplicationListener<ContextRefreshedEvent>, PriorityOrdered {
 
 	/**
 	 * The bean name of the configuration properties validator.
@@ -89,7 +92,7 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 
 	private Validator validator;
 
-	private boolean ownedValidator = false;
+	private volatile Validator localValidator;
 
 	private ConversionService conversionService;
 
@@ -194,11 +197,6 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 		}
 		if (this.validator == null) {
 			this.validator = getOptionalBean(VALIDATOR_BEAN_NAME, Validator.class);
-			if (this.validator == null && isJsr303Present()) {
-				this.validator = new Jsr303ValidatorFactory()
-						.run(this.applicationContext);
-				this.ownedValidator = true;
-			}
 		}
 		if (this.conversionService == null) {
 			this.conversionService = getOptionalBean(
@@ -207,20 +205,26 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 		}
 	}
 
-	private boolean isJsr303Present() {
-		for (String validatorClass : VALIDATOR_CLASSES) {
-			if (!ClassUtils.isPresent(validatorClass,
-					this.applicationContext.getClassLoader())) {
-				return false;
-			}
-		}
-		return true;
+	@Override
+	public void onApplicationEvent(ContextRefreshedEvent event) {
+		freeLocalValidator();
 	}
 
 	@Override
 	public void destroy() throws Exception {
-		if (this.ownedValidator) {
-			((DisposableBean) this.validator).destroy();
+		freeLocalValidator();
+	}
+
+	private void freeLocalValidator() {
+		try {
+			Validator validator = this.localValidator;
+			this.localValidator = null;
+			if (validator != null) {
+				((DisposableBean) validator).destroy();
+			}
+		}
+		catch (Exception ex) {
+			throw new IllegalStateException(ex);
 		}
 	}
 
@@ -228,15 +232,14 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 		PropertySourcesPlaceholderConfigurer configurer = getSinglePropertySourcesPlaceholderConfigurer();
 		if (configurer != null) {
 			// Flatten the sources into a single list so they can be iterated
+			// TODO: maybe we don't really need this (and it has lifecycle implications)
 			return new FlatPropertySources(configurer.getAppliedPropertySources());
 		}
-
 		if (this.environment instanceof ConfigurableEnvironment) {
 			MutablePropertySources propertySources = ((ConfigurableEnvironment) this.environment)
 					.getPropertySources();
 			return new FlatPropertySources(propertySources);
 		}
-
 		// empty, so not very useful, but fulfils the contract
 		return new MutablePropertySources();
 	}
@@ -339,15 +342,36 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 	}
 
 	private Validator determineValidator(Object bean) {
-		boolean globalValidatorSupportBean = (this.validator != null
-				&& this.validator.supports(bean.getClass()));
+		Validator validator = getValidator();
+		boolean supportsBean = (validator != null && validator.supports(bean.getClass()));
 		if (ClassUtils.isAssignable(Validator.class, bean.getClass())) {
-			if (!globalValidatorSupportBean) {
-				return (Validator) bean;
+			if (supportsBean) {
+				return new ChainingValidator(validator, (Validator) bean);
 			}
-			return new ChainingValidator(this.validator, (Validator) bean);
+			return (Validator) bean;
 		}
-		return (globalValidatorSupportBean ? this.validator : null);
+		return (supportsBean ? validator : null);
+	}
+
+	private Validator getValidator() {
+		if (this.validator != null) {
+			return this.validator;
+		}
+		if (this.localValidator == null && isJsr303Present()) {
+			this.localValidator = new LocalValidatorFactory()
+					.run(this.applicationContext);
+		}
+		return this.localValidator;
+	}
+
+	private boolean isJsr303Present() {
+		for (String validatorClass : VALIDATOR_CLASSES) {
+			if (!ClassUtils.isPresent(validatorClass,
+					this.applicationContext.getClassLoader())) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private PropertySources loadPropertySources(String[] locations,
@@ -393,7 +417,7 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 	 * Factory to create JSR 303 LocalValidatorFactoryBean. Inner class to prevent class
 	 * loader issues.
 	 */
-	private static class Jsr303ValidatorFactory {
+	private static class LocalValidatorFactory {
 
 		public Validator run(ApplicationContext applicationContext) {
 			LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();

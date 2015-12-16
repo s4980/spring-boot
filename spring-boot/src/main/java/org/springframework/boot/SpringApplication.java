@@ -162,6 +162,16 @@ public class SpringApplication {
 	private static final String[] WEB_ENVIRONMENT_CLASSES = { "javax.servlet.Servlet",
 			"org.springframework.web.context.ConfigurableWebApplicationContext" };
 
+	/**
+	 * Default banner location.
+	 */
+	public static final String BANNER_LOCATION_PROPERTY_VALUE = "banner.txt";
+
+	/**
+	 * Banner location property key.
+	 */
+	public static final String BANNER_LOCATION_PROPERTY = "banner.location";
+
 	private static final String CONFIGURABLE_WEB_ENVIRONMENT_CLASS = "org.springframework.web.context.ConfigurableWebEnvironment";
 
 	private static final String SYSTEM_PROPERTY_JAVA_AWT_HEADLESS = "java.awt.headless";
@@ -520,9 +530,7 @@ public class SpringApplication {
 	 * @see #setBannerMode
 	 */
 	protected void printBanner(Environment environment) {
-
 		Banner selectedBanner = selectBanner(environment);
-
 		if (this.bannerMode == Banner.Mode.LOG) {
 			try {
 				this.log.info(createStringFromBanner(selectedBanner, environment));
@@ -538,11 +546,11 @@ public class SpringApplication {
 	}
 
 	private Banner selectBanner(Environment environment) {
-		String location = environment.getProperty("banner.location", "banner.txt");
+		String location = environment.getProperty(BANNER_LOCATION_PROPERTY,
+				BANNER_LOCATION_PROPERTY_VALUE);
 		ResourceLoader resourceLoader = this.resourceLoader != null ? this.resourceLoader
 				: new DefaultResourceLoader(getClassLoader());
 		Resource resource = resourceLoader.getResource(location);
-
 		if (resource.exists()) {
 			return new ResourceBanner(resource);
 		}
@@ -650,7 +658,9 @@ public class SpringApplication {
 		if (log.isInfoEnabled()) {
 			String[] activeProfiles = context.getEnvironment().getActiveProfiles();
 			if (ObjectUtils.isEmpty(activeProfiles)) {
-				log.info("No profiles are active");
+				String[] defaultProfiles = context.getEnvironment().getDefaultProfiles();
+				log.info("No active profile set, falling back to default profiles: "
+						+ StringUtils.arrayToCommaDelimitedString(defaultProfiles));
 			}
 			else {
 				log.info("The following profiles are active: "
@@ -809,6 +819,10 @@ public class SpringApplication {
 
 	private void handleRunFailure(ConfigurableApplicationContext context,
 			SpringApplicationRunListeners listeners, Throwable exception) {
+		if (this.log.isErrorEnabled()) {
+			this.log.error("Application startup failed", exception);
+			registerLoggedException(exception);
+		}
 		try {
 			try {
 				listeners.finished(context, exception);
@@ -821,10 +835,6 @@ public class SpringApplication {
 		}
 		catch (Exception ex) {
 			this.log.warn("Unable to close ApplicationContext", ex);
-		}
-		if (this.log.isErrorEnabled()) {
-			this.log.error("Application startup failed", exception);
-			registerLoggedException(exception);
 		}
 		ReflectionUtils.rethrowRuntimeException(exception);
 	}
@@ -1144,11 +1154,12 @@ public class SpringApplication {
 		int exitCode = 0;
 		try {
 			try {
-				List<ExitCodeGenerator> generators = new ArrayList<ExitCodeGenerator>();
-				generators.addAll(Arrays.asList(exitCodeGenerators));
-				generators
-						.addAll(context.getBeansOfType(ExitCodeGenerator.class).values());
-				exitCode = getExitCode(generators);
+				ExitCodeGenerators generators = new ExitCodeGenerators();
+				Collection<ExitCodeGenerator> beans = context
+						.getBeansOfType(ExitCodeGenerator.class).values();
+				generators.addAll(exitCodeGenerators);
+				generators.addAll(beans);
+				exitCode = generators.getExitCode();
 			}
 			finally {
 				close(context);
@@ -1158,23 +1169,6 @@ public class SpringApplication {
 		catch (Exception ex) {
 			ex.printStackTrace();
 			exitCode = (exitCode == 0 ? 1 : exitCode);
-		}
-		return exitCode;
-	}
-
-	private static int getExitCode(List<ExitCodeGenerator> exitCodeGenerators) {
-		int exitCode = 0;
-		for (ExitCodeGenerator exitCodeGenerator : exitCodeGenerators) {
-			try {
-				int value = exitCodeGenerator.getExitCode();
-				if (value > 0 && value > exitCode || value < 0 && value < exitCode) {
-					exitCode = value;
-				}
-			}
-			catch (Exception ex) {
-				exitCode = (exitCode == 0 ? 1 : exitCode);
-				ex.printStackTrace();
-			}
 		}
 		return exitCode;
 	}

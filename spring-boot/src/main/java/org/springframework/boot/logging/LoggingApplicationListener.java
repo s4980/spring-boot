@@ -112,7 +112,7 @@ public class LoggingApplicationListener implements GenericApplicationListener {
 	/**
 	 * The name of the {@link LoggingSystem} bean.
 	 */
-	private static final String LOGGING_SYSTEM_BEAN_NAME = "springBootLoggingSystem";
+	public static final String LOGGING_SYSTEM_BEAN_NAME = "springBootLoggingSystem";
 
 	private static MultiValueMap<LogLevel, String> LOG_LEVEL_LOGGERS;
 
@@ -179,7 +179,8 @@ public class LoggingApplicationListener implements GenericApplicationListener {
 		else if (event instanceof ApplicationPreparedEvent) {
 			onApplicationPreparedEvent((ApplicationPreparedEvent) event);
 		}
-		else if (event instanceof ContextClosedEvent) {
+		else if (event instanceof ContextClosedEvent && ((ContextClosedEvent) event)
+				.getApplicationContext().getParent() == null) {
 			onContextClosedEvent();
 		}
 	}

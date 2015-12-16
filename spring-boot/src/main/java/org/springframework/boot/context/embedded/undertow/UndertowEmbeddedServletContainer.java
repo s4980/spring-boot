@@ -36,6 +36,7 @@ import io.undertow.server.handlers.encoding.ContentEncodingRepository;
 import io.undertow.server.handlers.encoding.EncodingHandler;
 import io.undertow.server.handlers.encoding.GzipEncodingProvider;
 import io.undertow.servlet.api.DeploymentManager;
+import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,6 +58,7 @@ import org.springframework.util.StringUtils;
  *
  * @author Ivan Sopov
  * @author Andy Wilkinson
+ * @author Eddú Meléndez
  * @since 1.2.0
  * @see UndertowEmbeddedServletContainerFactory
  */
@@ -77,6 +79,8 @@ public class UndertowEmbeddedServletContainer implements EmbeddedServletContaine
 
 	private final Compression compression;
 
+	private final String serverHeader;
+
 	private Undertow undertow;
 
 	private boolean started = false;
@@ -89,12 +93,20 @@ public class UndertowEmbeddedServletContainer implements EmbeddedServletContaine
 	public UndertowEmbeddedServletContainer(Builder builder, DeploymentManager manager,
 			String contextPath, int port, boolean useForwardHeaders, boolean autoStart,
 			Compression compression) {
+		this(builder, manager, contextPath, port, useForwardHeaders, autoStart,
+				compression, null);
+	}
+
+	public UndertowEmbeddedServletContainer(Builder builder, DeploymentManager manager,
+			String contextPath, int port, boolean useForwardHeaders, boolean autoStart,
+			Compression compression, String serverHeader) {
 		this.builder = builder;
 		this.manager = manager;
 		this.contextPath = contextPath;
 		this.useForwardHeaders = useForwardHeaders;
 		this.autoStart = autoStart;
 		this.compression = compression;
+		this.serverHeader = serverHeader;
 	}
 
 	@Override
@@ -123,6 +135,9 @@ public class UndertowEmbeddedServletContainer implements EmbeddedServletContaine
 		if (this.useForwardHeaders) {
 			httpHandler = Handlers.proxyPeerAddress(httpHandler);
 		}
+		if (StringUtils.hasText(this.serverHeader)) {
+			httpHandler = Handlers.header(httpHandler, "Server", this.serverHeader);
+		}
 		this.builder.setHandler(httpHandler);
 		return this.builder.build();
 	}
@@ -147,7 +162,7 @@ public class UndertowEmbeddedServletContainer implements EmbeddedServletContaine
 
 	private Predicate[] getCompressionPredicates(Compression compression) {
 		List<Predicate> predicates = new ArrayList<Predicate>();
-		predicates.add(Predicates.maxContentSize(compression.getMinResponseSize()));
+		predicates.add(new MaxSizePredicate(compression.getMinResponseSize()));
 		predicates.add(new CompressibleMimeTypePredicate(compression.getMimeTypes()));
 		if (compression.getExcludedUserAgents() != null) {
 			for (String agent : compression.getExcludedUserAgents()) {
@@ -280,4 +295,25 @@ public class UndertowEmbeddedServletContainer implements EmbeddedServletContaine
 
 	}
 
+	/**
+	 * Predicate that returns true if the Content-Size of a request is above a given value
+	 * or is missing.
+	 */
+	private static class MaxSizePredicate implements Predicate {
+
+		private final Predicate maxContentSize;
+
+		MaxSizePredicate(int size) {
+			this.maxContentSize = Predicates.maxContentSize(size);
+		}
+
+		@Override
+		public boolean resolve(HttpServerExchange value) {
+			if (value.getResponseHeaders().contains(Headers.CONTENT_LENGTH)) {
+				return this.maxContentSize.resolve(value);
+			}
+			return true;
+		}
+
+	}
 }

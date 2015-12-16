@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
  * @author Dave Syer
  * @author Andy Wilkinson
  * @author Stephane Nicoll
+ * @author Eddú Meléndez
  * @see EmbeddedServletContainerFactory
  * @see EmbeddedServletContainerCustomizer
  */
@@ -144,8 +145,8 @@ public interface ConfigurableEmbeddedServletContainer {
 	void setMimeMappings(MimeMappings mimeMappings);
 
 	/**
-	 * Sets the document root directory which will be used by the web context to serve static
-	 * files.
+	 * Sets the document root directory which will be used by the web context to serve
+	 * static files.
 	 * @param documentRoot the document root or {@code null} if not required
 	 */
 	void setDocumentRoot(File documentRoot);
@@ -188,5 +189,11 @@ public interface ConfigurableEmbeddedServletContainer {
 	 * @param compression the compression configuration
 	 */
 	void setCompression(Compression compression);
+
+	/**
+	 * Sets the server header value.
+	 * @param serverHeader the server header value
+	 */
+	void setServerHeader(String serverHeader);
 
 }

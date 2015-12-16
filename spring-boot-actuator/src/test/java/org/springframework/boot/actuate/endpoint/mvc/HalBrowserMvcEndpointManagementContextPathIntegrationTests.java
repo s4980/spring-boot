@@ -39,12 +39,13 @@ import org.springframework.web.context.WebApplicationContext;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration tests for {@link HalBrowserMvcEndpoint} when a custom management
- * context path has been configured.
+ * Integration tests for {@link HalBrowserMvcEndpoint} when a custom management context
+ * path has been configured.
  *
  * @author Dave Syer
  * @author Andy Wilkinson
@@ -76,6 +77,13 @@ public class HalBrowserMvcEndpointManagementContextPathIntegrationTests {
 	}
 
 	@Test
+	public void redirectJson() throws Exception {
+		this.mockMvc.perform(get("/admin/").accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isFound())
+				.andExpect(header().string("location", "/admin"));
+	}
+
+	@Test
 	public void actuatorHomeHtml() throws Exception {
 		this.mockMvc.perform(get("/admin/").accept(MediaType.TEXT_HTML))
 				.andExpect(status().isOk())
@@ -85,10 +93,8 @@ public class HalBrowserMvcEndpointManagementContextPathIntegrationTests {
 	@Test
 	public void trace() throws Exception {
 		this.mockMvc.perform(get("/admin/trace").accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$._links.self.href")
-						.value("http://localhost/admin/trace"))
-				.andExpect(jsonPath("$.content").isArray());
+				.andExpect(status().isOk()).andExpect(jsonPath("$._links").doesNotExist())
+				.andExpect(jsonPath("$").isArray());
 	}
 
 	@Test

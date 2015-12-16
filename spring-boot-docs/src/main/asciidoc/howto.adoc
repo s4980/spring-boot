@@ -101,8 +101,8 @@ Boot. A `SpringApplication` changes its `ApplicationContext` class depending on 
 thinks it needs a web application or not. The first thing you can do to help it is to just
 leave the servlet API dependencies off the classpath. If you can't do that (e.g. you are
 running 2 applications from the same code base) then you can explicitly call
-`SpringApplication.setWebEnvironment(false)`, or set the `applicationContextClass`
-property (through the Java API or with external properties).
+`setWebEnvironment(false)` on your `SpringApplication` instance, or set the
+`applicationContextClass` property (through the Java API or with external properties).
 Application code that you want to run as your business logic can be implemented as a
 `CommandLineRunner` and dropped into the context as a `@Bean` definition.
 
@@ -170,7 +170,7 @@ methods, and those added using `setSources()` are inspected to see if they have
 `@PropertySources`, and if they do, those properties are added to the `Environment` early
 enough to be used in all phases of the `ApplicationContext` lifecycle. Properties added
 in this way have lower
-priority than any added using the default locations (e.g. `application.properties), system properties, environment variables or the command line.
+priority than any added using the default locations (e.g. `application.properties`), system properties, environment variables or the command line.
 
 You can also provide System properties (or environment variables) to change the behavior:
 
@@ -1715,7 +1715,7 @@ you can see how to set things up.
 
 [[howto-execute-spring-batch-jobs-on-startup]]
 === Execute Spring Batch jobs on startup
-Spring Batch auto configuration is enabled by adding `@EnableBatchProcessing`
+Spring Batch auto-configuration is enabled by adding `@EnableBatchProcessing`
 (from Spring Batch) somewhere in your context.
 
 By default it executes *all* `Jobs` in the application context on startup (see
@@ -1774,6 +1774,20 @@ Look at {sc-spring-boot-autoconfigure}/web/ErrorMvcAutoConfiguration.{sc-ext}[`E
 
 See also the section on <<boot-features-error-handling, Error Handling>> for details of
 how to register handlers in the servlet container.
+
+
+
+[[howto-use-actuator-with-jersey]]
+=== Actuator and Jersey
+Actuator HTTP endpoints are only available for Spring MVC-based applications. If you want
+to use Jersey and still use the actuator you will need to enable Spring MVC (by depending
+on `spring-boot-starter-web`, for example). By default, both Jersey and the Spring MVC
+dispatcher servlet are mapped to the same path (`/`). You will need to change the path for
+one of them (by configuring `server.servlet-path` for Spring MVC or
+`spring.jersey.application-path` for Jersey). For example, if you add
+`server.servlet-path=/system` into `application.properties`, the actuator HTTP endpoints
+will be available under `/system`.
+
 
 
 [[howto-security]]

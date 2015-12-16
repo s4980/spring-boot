@@ -64,7 +64,7 @@
 		<derby.version>10.12.1.1</derby.version>
 		<dropwizard-metrics.version>3.1.2</dropwizard-metrics.version>
 		<ehcache.version>2.10.1</ehcache.version>
-		<embedded-mongo.version>1.50.0</embedded-mongo.version>
+		<embedded-mongo.version>1.50.1</embedded-mongo.version>
 		<flyway.version>3.2.1</flyway.version>
 		<freemarker.version>2.3.23</freemarker.version>
 		<elasticsearch.version>1.5.2</elasticsearch.version>
@@ -75,18 +75,18 @@
 		<gson.version>2.3.1</gson.version>
 		<h2.version>1.4.190</h2.version>
 		<hamcrest.version>1.3</hamcrest.version>
-		<hazelcast.version>3.5.3</hazelcast.version>
+		<hazelcast.version>3.5.4</hazelcast.version>
 		<hibernate.version>4.3.11.Final</hibernate.version>
 		<hibernate-validator.version>5.2.2.Final</hibernate-validator.version>
-		<hikaricp.version>2.4.2</hikaricp.version>
+		<hikaricp.version>2.4.3</hikaricp.version>
 		<hikaricp-java6.version>2.3.12</hikaricp-java6.version>
 		<hornetq.version>2.4.7.Final</hornetq.version>
 		<hsqldb.version>2.3.3</hsqldb.version>
 		<httpasyncclient.version>4.1.1</httpasyncclient.version>
 		<httpclient.version>4.5.1</httpclient.version>
 		<httpcore.version>4.4.4</httpcore.version>
-		<infinispan.version>8.0.1.Final</infinispan.version>
-		<jackson.version>2.6.3</jackson.version>
+		<infinispan.version>8.0.2.Final</infinispan.version>
+		<jackson.version>2.6.4</jackson.version>
 		<janino.version>2.7.8</janino.version>
 		<javassist.version>3.18.1-GA</javassist.version> <!-- Same as Hibernate -->
 		<javax-cache.version>1.0.0</javax-cache.version>
@@ -109,18 +109,18 @@
 		<json-path.version>2.0.0</json-path.version>
 		<jstl.version>1.2</jstl.version>
 		<junit.version>4.12</junit.version>
-		<liquibase.version>3.4.1</liquibase.version>
+		<liquibase.version>3.4.2</liquibase.version>
 		<log4j.version>1.2.17</log4j.version>
 		<log4j2.version>2.4.1</log4j2.version>
 		<logback.version>1.1.3</logback.version>
 		<mariadb.version>1.2.3</mariadb.version>
 		<mockito.version>1.10.19</mockito.version>
 		<mongodb.version>2.13.3</mongodb.version>
-		<mysql.version>5.1.37</mysql.version>
+		<mysql.version>5.1.38</mysql.version>
 		<nekohtml.version>1.9.22</nekohtml.version>
-		<postgresql.version>9.4-1205-jdbc41</postgresql.version>
+		<postgresql.version>9.4-1206-jdbc41</postgresql.version>
 		<reactor.version>2.0.7.RELEASE</reactor.version>
-		<reactor-spring.version>2.0.6.RELEASE</reactor-spring.version>
+		<reactor-spring.version>2.0.7.RELEASE</reactor-spring.version>
 		<sendgrid.version>2.2.2</sendgrid.version>
 		<servlet-api.version>3.1.0</servlet-api.version>
 		<simple-json.version>1.1.1</simple-json.version>
@@ -128,27 +128,27 @@
 		<snakeyaml.version>1.16</snakeyaml.version>
 		<solr.version>4.10.4</solr.version>
 		<spock.version>1.0-groovy-2.4</spock.version>
-		<spring.version>4.2.3.RELEASE</spring.version>
+		<spring.version>4.2.4.BUILD-SNAPSHOT</spring.version>
 		<spring-amqp.version>1.5.2.RELEASE</spring-amqp.version>
-		<spring-cloud-connectors.version>1.2.0.RELEASE</spring-cloud-connectors.version>
-		<spring-batch.version>3.0.5.RELEASE</spring-batch.version>
-		<spring-data-releasetrain.version>Gosling-SR1</spring-data-releasetrain.version>
+		<spring-cloud-connectors.version>1.2.1.RELEASE</spring-cloud-connectors.version>
+		<spring-batch.version>3.0.6.RELEASE</spring-batch.version>
+		<spring-data-releasetrain.version>Gosling-BUILD-SNAPSHOT</spring-data-releasetrain.version>
 		<spring-hateoas.version>0.19.0.RELEASE</spring-hateoas.version>
-		<spring-integration.version>4.2.1.RELEASE</spring-integration.version>
-		<spring-loaded.version>1.2.4.RELEASE</spring-loaded.version>
+		<spring-integration.version>4.2.3.RELEASE</spring-integration.version>
+		<spring-loaded.version>1.2.5.RELEASE</spring-loaded.version>
 		<spring-mobile.version>1.1.5.RELEASE</spring-mobile.version>
 		<spring-plugin.version>1.2.0.RELEASE</spring-plugin.version>
-		<spring-restdocs.version>1.0.0.RELEASE</spring-restdocs.version>
+		<spring-restdocs.version>1.0.1.RELEASE</spring-restdocs.version>
 		<spring-retry.version>1.1.2.RELEASE</spring-retry.version>
 		<spring-security.version>4.0.3.RELEASE</spring-security.version>
 		<spring-security-jwt.version>1.0.3.RELEASE</spring-security-jwt.version>
 		<spring-security-oauth.version>2.0.8.RELEASE</spring-security-oauth.version>
 		<spring-session.version>1.0.2.RELEASE</spring-session.version>
-		<spring-social.version>1.1.3.RELEASE</spring-social.version>
-		<spring-social-facebook.version>2.0.2.RELEASE</spring-social-facebook.version>
+		<spring-social.version>1.1.4.RELEASE</spring-social.version>
+		<spring-social-facebook.version>2.0.3.RELEASE</spring-social-facebook.version>
 		<spring-social-linkedin.version>1.0.2.RELEASE</spring-social-linkedin.version>
 		<spring-social-twitter.version>1.1.2.RELEASE</spring-social-twitter.version>
-		<spring-ws.version>2.2.3.RELEASE</spring-ws.version>
+		<spring-ws.version>2.2.4.RELEASE</spring-ws.version>
 		<statsd-client.version>3.1.0</statsd-client.version>
 		<sun-mail.version>${javax-mail.version}</sun-mail.version>
 		<thymeleaf.version>2.1.4.RELEASE</thymeleaf.version>
@@ -156,8 +156,8 @@
 		<thymeleaf-extras-conditionalcomments.version>2.1.1.RELEASE</thymeleaf-extras-conditionalcomments.version>
 		<thymeleaf-layout-dialect.version>1.3.1</thymeleaf-layout-dialect.version>
 		<thymeleaf-extras-data-attribute.version>1.3</thymeleaf-extras-data-attribute.version>
-		<tomcat.version>8.0.28</tomcat.version>
-		<undertow.version>1.3.5.Final</undertow.version>
+		<tomcat.version>8.0.30</tomcat.version>
+		<undertow.version>1.3.10.Final</undertow.version>
 		<velocity.version>1.7</velocity.version>
 		<velocity-tools.version>2.0</velocity-tools.version>
 		<webjars-hal-browser.version>9f96c74</webjars-hal-browser.version>
@@ -1557,6 +1557,18 @@
 					<exclusion>
 						<groupId>commons-logging</groupId>
 						<artifactId>commons-logging</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.apache.logging.log4j</groupId>
+						<artifactId>log4j-core</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.apache.logging.log4j</groupId>
+						<artifactId>log4j-slf4j-impl</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.apache.logging.log4j</groupId>
+						<artifactId>log4j-jcl</artifactId>
 					</exclusion>
 				</exclusions>
 			</dependency>

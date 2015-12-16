@@ -77,6 +77,12 @@ public class BasicOAuth2SsoConfigurationTests {
 				.andExpect(header().string("location", "http://localhost/login"));
 	}
 
+	@Test
+	public void homePageSends401ToXhr() throws Exception {
+		this.mvc.perform(get("/").header("X-Requested-With", "XMLHttpRequest"))
+				.andExpect(status().isUnauthorized());
+	}
+
 	@Configuration
 	@Import(OAuth2AutoConfiguration.class)
 	@EnableOAuth2Sso

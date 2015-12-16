@@ -9,7 +9,8 @@ application using HTTP endpoints, with JMX or even by remote shell (SSH or Telne
 Auditing, health and metrics gathering can be automatically applied to your application.
 
 Actuator HTTP endpoints are only available with a Spring MVC-based application. In
-particular, it will not work with Jersey unless you enable Spring MVC as well.
+particular, it will not work with Jersey <<howto.adoc#howto-use-actuator-with-jersey,
+unless you enable Spring MVC as well.>>
 --
 
 
@@ -84,6 +85,11 @@ HATEOAS to be on the classpath.
 |`configprops`
 |Displays a collated list of all `@ConfigurationProperties`.
 |true
+
+|`docs`
+|Displays documentation, including example requests and responses, for the Actuator's
+endpoints. Requires `spring-boot-actuator-docs` to be on the classpath.
+|false
 
 |`dump`
 |Performs a thread dump.
@@ -323,7 +329,7 @@ additional details to be displayed.
 	import org.springframework.stereotype.Component;
 
 	@Component
-	public class MyHealth implements HealthIndicator {
+	public class MyHealthIndicator implements HealthIndicator {
 
 		@Override
 		public Health health() {
@@ -336,6 +342,10 @@ additional details to be displayed.
 
 	}
 ----
+
+NOTE: The identifier for a given `HealthIndicator` is the name of the bean without the
+`HealthIndicator` suffix if it exists. In the example above, the health information will
+be available in an entry named `my`.
 
 In addition to Spring Boot's predefined {sc-spring-boot-actuator}/health/Status.{sc-ext}[`Status`]
 types, it is also possible for `Health` to return a custom `Status` that represents a
@@ -923,6 +933,10 @@ endpoint you should see a response similar to this:
 		"heap.committed": 986624,
 		"heap.init": 262144,
 		"heap.used": 52765,
+		"nonheap": 0,
+		"nonheap.committed": 77568,
+		"nonheap.init": 2496,
+		"nonheap.used": 75826,
 		"mem": 986624,
 		"mem.free": 933858,
 		"processors": 8,

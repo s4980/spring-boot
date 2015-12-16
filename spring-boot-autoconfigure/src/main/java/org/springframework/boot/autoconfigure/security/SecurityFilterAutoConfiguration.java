@@ -16,10 +16,17 @@
 
 package org.springframework.boot.autoconfigure.security;
 
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.servlet.DispatcherType;
+
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.embedded.DelegatingFilterProxyRegistrationBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -36,6 +43,7 @@ import org.springframework.security.web.context.AbstractSecurityWebApplicationIn
  *
  * @author Rob Winch
  * @author Phillip Webb
+ * @author Andy Wilkinson
  * @since 1.3
  */
 @Configuration
@@ -54,7 +62,26 @@ public class SecurityFilterAutoConfiguration {
 		DelegatingFilterProxyRegistrationBean registration = new DelegatingFilterProxyRegistrationBean(
 				DEFAULT_FILTER_NAME);
 		registration.setOrder(securityProperties.getFilterOrder());
+		registration.setDispatcherTypes(getDispatcherTypes(securityProperties));
 		return registration;
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	public SecurityProperties securityProperties() {
+		return new SecurityProperties();
+	}
+
+	private EnumSet<DispatcherType> getDispatcherTypes(
+			SecurityProperties securityProperties) {
+		if (securityProperties.getFilterDispatcherTypes() == null) {
+			return null;
+		}
+		Set<DispatcherType> dispatcherTypes = new HashSet<DispatcherType>();
+		for (String dispatcherType : securityProperties.getFilterDispatcherTypes()) {
+			dispatcherTypes.add(DispatcherType.valueOf(dispatcherType));
+		}
+		return EnumSet.copyOf(dispatcherTypes);
 	}
 
 }

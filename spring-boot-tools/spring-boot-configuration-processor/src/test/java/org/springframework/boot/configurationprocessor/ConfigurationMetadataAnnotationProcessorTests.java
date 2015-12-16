@@ -38,8 +38,10 @@ import org.springframework.boot.configurationsample.incremental.BarProperties;
 import org.springframework.boot.configurationsample.incremental.FooProperties;
 import org.springframework.boot.configurationsample.incremental.RenamedBarProperties;
 import org.springframework.boot.configurationsample.lombok.LombokExplicitProperties;
+import org.springframework.boot.configurationsample.lombok.LombokInnerClassProperties;
 import org.springframework.boot.configurationsample.lombok.LombokSimpleDataProperties;
 import org.springframework.boot.configurationsample.lombok.LombokSimpleProperties;
+import org.springframework.boot.configurationsample.lombok.SimpleLombokPojo;
 import org.springframework.boot.configurationsample.method.EmptyTypeMethodConfig;
 import org.springframework.boot.configurationsample.method.InvalidMethodConfig;
 import org.springframework.boot.configurationsample.method.MethodAndClassConfig;
@@ -348,6 +350,33 @@ public class ConfigurationMetadataAnnotationProcessorTests {
 	}
 
 	@Test
+	public void lombokInnerClassProperties() throws Exception {
+		ConfigurationMetadata metadata = compile(LombokInnerClassProperties.class);
+		assertThat(metadata,
+				containsGroup("config").fromSource(LombokInnerClassProperties.class));
+		assertThat(metadata,
+				containsGroup("config.first").ofType(LombokInnerClassProperties.Foo.class)
+						.fromSource(LombokInnerClassProperties.class));
+		assertThat(metadata, containsProperty("config.first.name"));
+		assertThat(metadata, containsProperty("config.first.bar.name"));
+		assertThat(metadata,
+				containsGroup("config.second", LombokInnerClassProperties.Foo.class)
+						.fromSource(LombokInnerClassProperties.class));
+		assertThat(metadata, containsProperty("config.second.name"));
+		assertThat(metadata, containsProperty("config.second.bar.name"));
+		assertThat(metadata, containsGroup("config.third").ofType(SimpleLombokPojo.class)
+				.fromSource(LombokInnerClassProperties.class));
+		// For some reason the annotation processor resolves a type for SimpleLombokPojo
+		// that is resolved (compiled) and the source annotations are gone. Because we
+		// don't see the @Data annotation anymore, no field is harvested. What is crazy is
+		// that a sample project works fine so this seem to be related to the unit test
+		// environment for some reason. assertThat(metadata,
+		// containsProperty("config.third.value"));
+		assertThat(metadata, containsProperty("config.fourth"));
+		assertThat(metadata, not(containsGroup("config.fourth")));
+	}
+
+	@Test
 	public void mergingOfAdditionalProperty() throws Exception {
 		ItemMetadata property = ItemMetadata.newProperty(null, "foo", "java.lang.String",
 				AdditionalMetadata.class.getName(), null, null, null, null);
@@ -480,33 +509,51 @@ public class ConfigurationMetadataAnnotationProcessorTests {
 	}
 
 	@Test
+	public void mergingOfAdditionalMetadata() throws Exception {
+		File metaInfFolder = new File(this.compiler.getOutputLocation(), "META-INF");
+		metaInfFolder.mkdirs();
+		File additionalMetadataFile = new File(metaInfFolder,
+				"additional-spring-configuration-metadata.json");
+		additionalMetadataFile.createNewFile();
+		JSONObject property = new JSONObject();
+		property.put("name", "foo");
+		property.put("type", "java.lang.String");
+		property.put("sourceType", AdditionalMetadata.class.getName());
+		JSONArray properties = new JSONArray();
+		properties.put(property);
+		JSONObject additionalMetadata = new JSONObject();
+		additionalMetadata.put("properties", properties);
+		FileWriter writer = new FileWriter(additionalMetadataFile);
+		additionalMetadata.write(writer);
+		writer.flush();
+		ConfigurationMetadata metadata = compile(SimpleProperties.class);
+		assertThat(metadata, containsProperty("simple.comparator"));
+		assertThat(metadata, containsProperty("foo", String.class)
+				.fromSource(AdditionalMetadata.class));
+	}
+
+	@Test
 	public void incrementalBuild() throws Exception {
 		TestProject project = new TestProject(this.temporaryFolder, FooProperties.class,
 				BarProperties.class);
 		assertFalse(project.getOutputFile(MetadataStore.METADATA_PATH).exists());
-
 		ConfigurationMetadata metadata = project.fullBuild();
 		assertTrue(project.getOutputFile(MetadataStore.METADATA_PATH).exists());
-
 		assertThat(metadata,
 				containsProperty("foo.counter").fromSource(FooProperties.class));
 		assertThat(metadata,
 				containsProperty("bar.counter").fromSource(BarProperties.class));
-
 		metadata = project.incrementalBuild(BarProperties.class);
-
 		assertThat(metadata,
 				containsProperty("foo.counter").fromSource(FooProperties.class));
 		assertThat(metadata,
 				containsProperty("bar.counter").fromSource(BarProperties.class));
-
 		project.addSourceCode(BarProperties.class,
 				BarProperties.class.getResourceAsStream("BarProperties.snippet"));
 		metadata = project.incrementalBuild(BarProperties.class);
 		assertThat(metadata, containsProperty("bar.extra"));
 		assertThat(metadata, containsProperty("foo.counter"));
 		assertThat(metadata, containsProperty("bar.counter"));
-
 		project.revert(BarProperties.class);
 		metadata = project.incrementalBuild(BarProperties.class);
 		assertThat(metadata, not(containsProperty("bar.extra")));
@@ -521,7 +568,6 @@ public class ConfigurationMetadataAnnotationProcessorTests {
 		ConfigurationMetadata metadata = project.fullBuild();
 		assertThat(metadata, containsProperty("foo.counter"));
 		assertThat(metadata, containsProperty("bar.counter"));
-
 		project.replaceText(BarProperties.class, "@ConfigurationProperties",
 				"//@ConfigurationProperties");
 		metadata = project.incrementalBuild(BarProperties.class);
@@ -540,7 +586,6 @@ public class ConfigurationMetadataAnnotationProcessorTests {
 				containsProperty("bar.counter").fromSource(BarProperties.class));
 		assertThat(metadata, not(
 				containsProperty("bar.counter").fromSource(RenamedBarProperties.class)));
-
 		project.delete(BarProperties.class);
 		project.add(RenamedBarProperties.class);
 		metadata = project.incrementalBuild(RenamedBarProperties.class);

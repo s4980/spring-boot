@@ -93,7 +93,7 @@ If you import additional starters, you can safely omit the version number.
 
 With that setup, you can also override individual dependencies by overriding a property
 in your own project. For instance, to upgrade to another Spring Data release train you'd
-add the following to your `pom.xml
+add the following to your `pom.xml`.
 
 [source,xml,indent=0,subs="verbatim,quotes,attributes"]
 ----
@@ -137,7 +137,7 @@ That setup does not allow you to override individual dependencies using a proper
 explained above. To achieve the same result, you'd need to add an entry in the
 `dependencyManagement` of your project **before** the `spring-boot-dependencies`
 entry. For instance, to upgrade to another Spring Data release train you'd add the
-following to your `pom.xml
+following to your `pom.xml`.
 
 [source,xml,indent=0,subs="verbatim,quotes,attributes"]
 ----
@@ -823,8 +823,7 @@ This allows you to attach a debugger to your packaged application:
 [[using-boot-running-with-the-maven-plugin]]
 === Using the Maven plugin
 The Spring Boot Maven plugin includes a `run` goal which can be used to quickly compile
-and run your application. Applications run in an exploded form, and you can edit
-resources for instant "`hot`" reload.
+and run your application. Applications run in an exploded form just like in your IDE.
 
 [indent=0,subs="attributes"]
 ----
@@ -943,19 +942,46 @@ on the classpath change. This can be a useful feature when working in an IDE as 
 a very fast feedback loop for code changes. By default, any entry on the classpath that
 points to a folder will be monitored for changes.
 
-.Triggering a change
+.Triggering a restart
 ****
-As DevTools _only_ monitors classpath resources, the only way to trigger a change is to
-update the classpath. On Eclipse, saving is actually updating the project, compiling or
-copying resources for you as part of the save action. If you are using IntelliJ IDEA,
-there is no such thing as a save action since the resources are saved automatically.
-IntelliJ IDEA users should use the `Build` -> `Make Project` action to achieve the same
-result.
+As DevTools monitors classpath resources, the only way to trigger a restart is to update
+the classpath. The way in which you cause the classpath to be updated depends on the IDE
+that you are using. In Eclipse, saving a modified file will cause the classpath to be
+updated and trigger a restart. In IntelliJ IDEA, building the project (`Build -> Make
+Project`) will have the same effect.
 ****
 
-NOTE: You can also start your application via the supported build plugins (i.e. Maven and
+[NOTE]
+====
+You can also start your application via the supported build plugins (i.e. Maven and
 Gradle) as long as forking is enabled since DevTools need an isolated application
-classloader to operate properly.
+classloader to operate properly. You can force the plugin to fork the process as
+follows:
+
+.Maven
+[source,xml,indent=0,subs="verbatim,quotes,attributes"]
+----
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<fork>true</fork>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+----
+
+.Gradle
+[source,groovy,indent=0,subs="verbatim,attributes"]
+----
+	bootRun {
+		addResources = true
+	}
+----
+====
 
 TIP: Automatic restart works very well when used with LiveReload.
 <<using-boot-devtools-livereload,See below>> for details. If you use JRebel automatic
@@ -965,6 +991,10 @@ restarts will be disabled in favor of dynamic class reloading. Other devtools fe
 NOTE: DevTools relies on the application context's shutdown hook to close it during a
 restart. It will not work correctly if you have disabled the shutdown hook (
 `SpringApplication.setRegisterShutdownHook(false)`).
+
+NOTE: When deciding if an entry on the classpath should trigger a restart when it changes,
+DevTools automatically ignores projects named `spring-boot`, `spring-boot-devtools`,
+`spring-boot-autoconfigure`, `spring-boot-actuator`, and `spring-boot-starter`.
 
 [[using-spring-boot-restart-vs-reload]]
 .Restart vs Reload

@@ -18,6 +18,7 @@ package org.springframework.boot.actuate.autoconfigure;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -128,8 +129,7 @@ public class EndpointWebMvcHypermediaManagementContextConfiguration {
 			ManagementServerProperties management, DocsMvcEndpoint endpoint) {
 		String path = management.getContextPath() + endpoint.getPath()
 				+ "/#spring_boot_actuator__{rel}";
-		if (server.getPort() == management.getPort() && management.getPort() != null
-				&& management.getPort() != 0) {
+		if (server.getPort().equals(management.getPort()) && management.getPort() != 0) {
 			path = server.getPath(path);
 		}
 		return new DefaultCurieProvider("boot", new UriTemplate(path));
@@ -206,10 +206,9 @@ public class EndpointWebMvcHypermediaManagementContextConfiguration {
 	 * Controller advice that adds links to the existing Actuator endpoints. By default
 	 * all the top-level resources are enhanced with a "self" link. Those resources that
 	 * could not be enhanced (e.g. "/env/{name}") because their values are "primitive" are
-	 * ignored. Those that have values of type Collection (e.g. /trace) are transformed in
-	 * to maps, and the original collection value is added with a key equal to the
-	 * endpoint name.
+	 * ignored.
 	 */
+	@ConditionalOnProperty(prefix = "endpoints.hypermedia", name = "enabled", matchIfMissing = false)
 	@ControllerAdvice(assignableTypes = MvcEndpoint.class)
 	public static class MvcEndpointAdvice implements ResponseBodyAdvice<Object> {
 
@@ -244,6 +243,10 @@ public class EndpointWebMvcHypermediaManagementContextConfiguration {
 				ServletServerHttpRequest request, ServerHttpResponse response) {
 			if (body == null || body instanceof Resource) {
 				// Assume it already was handled or it already has its links
+				return body;
+			}
+			if (body instanceof Collection || body.getClass().isArray()) {
+				// We can't add links to a collection without wrapping it
 				return body;
 			}
 			HttpMessageConverter<Object> converter = findConverter(selectedConverterType,

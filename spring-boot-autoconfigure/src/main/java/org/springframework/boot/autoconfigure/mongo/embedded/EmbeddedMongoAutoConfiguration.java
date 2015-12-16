@@ -17,6 +17,8 @@
 package org.springframework.boot.autoconfigure.mongo.embedded;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,6 +77,11 @@ import org.springframework.util.Assert;
 @AutoConfigureBefore(MongoAutoConfiguration.class)
 @ConditionalOnClass({ Mongo.class, MongodStarter.class })
 public class EmbeddedMongoAutoConfiguration {
+
+	private static final byte[] IP4_LOOPBACK_ADDRESS = { 127, 0, 0, 1 };
+
+	private static final byte[] IP6_LOOPBACK_ADDRESS = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 1 };
 
 	@Autowired
 	private MongoProperties properties;
@@ -136,7 +143,12 @@ public class EmbeddedMongoAutoConfiguration {
 		MongodConfigBuilder builder = new MongodConfigBuilder()
 				.version(featureAwareVersion);
 		if (getPort() > 0) {
-			builder.net(new Net(getPort(), Network.localhostIsIPv6()));
+			builder.net(new Net(getHost().getHostAddress(), getPort(),
+					Network.localhostIsIPv6()));
+		}
+		else {
+			builder.net(new Net(getHost().getHostAddress(),
+					Network.getFreeServerPort(getHost()), Network.localhostIsIPv6()));
 		}
 		return builder.build();
 	}
@@ -146,6 +158,14 @@ public class EmbeddedMongoAutoConfiguration {
 			return MongoProperties.DEFAULT_PORT;
 		}
 		return this.properties.getPort();
+	}
+
+	private InetAddress getHost() throws UnknownHostException {
+		if (this.properties.getHost() == null) {
+			return InetAddress.getByAddress(Network.localhostIsIPv6()
+					? IP6_LOOPBACK_ADDRESS : IP4_LOOPBACK_ADDRESS);
+		}
+		return InetAddress.getByName(this.properties.getHost());
 	}
 
 	private void publishPortInfo(int port) {

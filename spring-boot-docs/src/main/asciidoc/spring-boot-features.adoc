@@ -60,7 +60,8 @@ You can use the following variables inside your `banner.txt` file:
 | Variable | Description
 
 |`${application.version}`
-|The version number of your application as declared in `MANIFEST.MF`. For example `Implementation-Version: 1.0` is printed as `1.0`.
+|The version number of your application as declared in `MANIFEST.MF`. For example
+`Implementation-Version: 1.0` is printed as `1.0`.
 
 |`${application.formatted-version}`
 |The version number of your application as declared in `MANIFEST.MF` formatted for
@@ -76,13 +77,32 @@ brackets and prefixed with `v`). For example `(v{spring-boot-version})`.
 |`${Ansi.NAME}` (or `${AnsiColor.NAME}`, `${AnsiBackground.NAME}`, `${AnsiStyle.NAME}`)
 |Where `NAME` is the name of an ANSI escape code. See
 {sc-spring-boot}/ansi/AnsiPropertySource.{sc-ext}[`AnsiPropertySource`] for details.
+
+|`${application.title}`
+|The title of your application as declared in `MANIFEST.MF`. For example
+`Implementation-Title: MyApp` is printed as `MyApp`.
 |===
 
 TIP: The `SpringApplication.setBanner(...)` method can be used if you want to generate
 a banner programmatically. Use the `org.springframework.boot.Banner` interface and
 implement your own `printBanner()` method.
 
+You can also use the `spring.main.banner-mode` property to determine if the banner has
+to be printed on `System.out` (`console`), using the configured logger (`log`) or not
+at all (`off`).
 
+[NOTE]
+====
+YAML maps `off` to `false` so make sure to add quotes if you want to disable the
+banner in your application.
+
+[source,yaml,indent=0]
+----
+	spring:
+		main:
+			banner-mode: "off"
+----
+====
 
 [[boot-features-customizing-spring-application]]
 === Customizing SpringApplication
@@ -455,13 +475,13 @@ defined using the naming convention `application-{profile}.properties`. The
 used if no active profiles are set (i.e. if no profiles are explicitly activated
 then properties from `application-default.properties` are loaded).
 
-Profile specific properties are loaded from the same locations as standard
+Profile-specific properties are loaded from the same locations as standard
 `application.properties`, with profile-specific files always overriding the non-specific
 ones irrespective of whether the profile-specific files are inside or outside your
 packaged jar.
 
 If several profiles are specified, a last wins strategy applies. For example, profiles
-specified by the `spring.active.profiles` property are added after those configured via
+specified by the `spring.profiles.active` property are added after those configured via
 the `SpringApplication` API and therefore take precedence.
 
 
@@ -794,6 +814,10 @@ The following properties names can all be used:
 |Upper case format. Recommended when using a system environment variables.
 |===
 
+
+
+[[boot-features-external-config-conversion]]
+==== Properties conversion
 Spring will attempt to coerce the external application properties to the right type when
 it binds to the `@ConfigurationProperties` beans. If you need custom type conversion you
 can provide a `ConversionService` bean (with bean id `conversionService`) or custom
@@ -803,7 +827,8 @@ bean definitions annotated as `@ConfigurationPropertiesBinding`).
 NOTE: As this bean is requested very early during the application lifecycle, make sure to
 limit the dependencies that your `ConversionService` is using. Typically, any dependency
 that you require may not be fully initialized at creation time. You may want to rename
-your custom `ConversionService` if it's not required for configuration keys coercion.
+your custom `ConversionService` if it's not required for configuration keys coercion and
+only rely on custom converters qualified with `@ConfigurationPropertiesBinding`.
 
 
 
@@ -905,7 +930,7 @@ properties, the highest `PropertySource` will win. This means that you can speci
 active profiles in `application.properties` then *replace* them using the command line
 switch.
 
-Sometimes it is useful to have profile specific properties that *add* to the active
+Sometimes it is useful to have profile-specific properties that *add* to the active
 profiles rather than replace them. The `spring.profiles.include` property can be used
 to unconditionally add active profiles. The `SpringApplication` entry point also has
 a Java API for setting additional profiles (i.e. on top of those activated by the
@@ -938,8 +963,8 @@ possible to activate profiles using Spring's `ConfigurableEnvironment` interface
 
 
 [[boot-features-profile-specific-configuration]]
-=== Profile specific configuration files
-Profile specific variants of both `application.properties` (or `application.yml`) and
+=== Profile-specific configuration files
+Profile-specific variants of both `application.properties` (or `application.yml`) and
 files referenced via `@ConfigurationProperties` are considered as files are loaded.
 See _<<boot-features-external-config-profile-specific-properties>>_ for details.
 
@@ -1008,12 +1033,62 @@ When the debug mode is enabled, a selection of core loggers (embedded container,
 and Spring) are configured to output more information. Enabling the debug mode does _not_
 configure your application log all messages with `DEBUG` level.
 
+[[boot-features-logging-color-coded-output]]
+==== Color-coded output
 If your terminal supports ANSI, color output will be used to aid readability. You can set
 `spring.output.ansi.enabled` to a
 {dc-spring-boot}/ansi/AnsiOutput.Enabled.{dc-ext}[supported value] to override the auto
 detection.
 
+Color coding is configured using the `%clr` conversion word. In its simplest form the
+converter will color the output according to the log level, for example:
 
+[source,indent=0]
+----
+%clr(%5p)
+----
+
+The mapping of log level to a color is as follows:
+
+|===
+|Level | Color
+
+|`FATAL`
+| Red
+
+|`ERROR`
+| Red
+
+|`WARN`
+| Yellow
+
+|`INFO`
+| Green
+
+|`DEBUG`
+| Green
+
+|`TRACE`
+| Green
+|===
+
+Alternatively, you can specify the color or style that should be used by providing it
+as an option to the conversion. For example, to make the text yellow:
+
+[source,indent=0]
+----
+%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){yellow}
+----
+
+The following colors and styles are supported:
+
+ - `blue`
+ - `cyan`
+ - `faint`
+ - `green`
+ - `magenta`
+ - `red`
+ - `yellow`
 
 [[boot-features-logging-file-output]]
 === File output
@@ -1027,6 +1102,7 @@ The following table shows how the `logging.*` properties can be used together:
 [cols="1,1,1,4"]
 |===
 |`logging.file` |`logging.path` |Example |Description
+
 |_(none)_
 |_(none)_
 |
@@ -1157,6 +1233,14 @@ configuration files.  See the default configurations in `spring-boot.jar` for ex
 
 [TIP]
 ====
+If you want to use a placeholder in a logging property, you should use
+<<boot-features-external-config-placeholders-in-properties,Spring Boot's syntax>> and not
+the syntax of the underlying framework. Notably, if you're using Logback, you should use
+`:` as the delimiter between a property name and its default value and not `:-`.
+====
+
+[TIP]
+====
 
 You can add MDC and other ad-hoc content to log lines by overriding
 only the `LOG_LEVEL_PATTERN` (or `logging.pattern.level` with
@@ -1183,7 +1267,7 @@ it's loaded too early. You need to either use `logback-spring.xml` or define a
 
 
 
-==== Profile specific configuration
+==== Profile-specific configuration
 The `<springProfile>` tag allows you to optionally include or exclude sections of
 configuration based on the active Spring profiles. Profile sections are supported anywhere
 within the `<configuration>` element. Use the `name` attribute to specify which profile
@@ -1716,8 +1800,23 @@ map to `+/*+`.
 
 If convention-based mapping is not flexible enough you can use the
 `ServletRegistrationBean`, `FilterRegistrationBean` and `ServletListenerRegistrationBean`
-classes for complete control. You can also register items directly if your bean implements
-the `ServletContextInitializer` interface.
+classes for complete control.
+
+
+
+[[boot-features-embedded-container-context-initializer]]
+==== Servlet Context Initialization
+Embedded servlet containers will not directly execute the Servlet 3.0+
+`javax.servlet.ServletContainerInitializer` interface, or Spring's
+`org.springframework.web.WebApplicationInitializer` interface. This is an intentional
+design decision intended to reduce the risk that 3rd party libraries designed to run
+inside a war will break Spring Boot applications.
+
+If you need to perform servlet context initialization in a Spring Boot application, you
+should register a bean that implements the
+`org.springframework.boot.context.embedded.ServletContextInitializer` interface. The
+single `onStartup` method provides access to the `ServletContext`, and  can easily be used
+as an adapter to an existing `WebApplicationInitializer if necessary.
 
 
 
@@ -3768,6 +3867,21 @@ in order to run your integration tests using random ports. For example:
 	}
 ----
 
+Alternatively, you can use the `randomPort` convenience attribute to set `server.port=0`.
+For example:
+
+[source,java,indent=0,subs="verbatim,quotes,attributes"]
+----
+	@RunWith(SpringJUnit4ClassRunner.class)
+	@SpringApplicationConfiguration(MyApplication.class)
+	@WebIntegrationTest(randomPort = true)
+	public class SomeIntegrationTests {
+
+		// ...
+
+	}
+----
+
 See <<howto-discover-the-http-port-at-runtime>> for a description of how you can discover
 the actual port that was allocated for the duration of the tests.
 
@@ -3928,6 +4042,11 @@ You can use the
 annotations if your configuration needs to be applied in a specific order. For example, if
 you provide web-specific configuration, your class may need to be applied after
 `WebMvcAutoConfiguration`.
+
+If you want to order certain auto-configurations that shouldn't have any direct
+knowledge of each other, you can also use `@AutoconfigureOrder`. That annotation has the
+same semantic as the regular `@Order` annotation but provides a dedicated order for
+auto-configuration classes.
 
 
 

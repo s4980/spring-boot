@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package org.springframework.boot.json;
+package org.springframework.boot.context.configwarnings.real.nested;
 
-/**
- * Tests for {@link JsonJsonParser}.
- *
- * @author Dave Syer
- */
-public class SimpleJsonJsonParserTests extends AbstractJsonParserTests {
+import org.springframework.stereotype.Component;
 
-	@Override
-	protected JsonParser getParser() {
-		return new JsonJsonParser();
-	}
+@Component
+public class ExampleBean {
 
 }

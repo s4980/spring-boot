@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package org.springframework.boot.context.configwarnings;
+package org.springframework.boot.json;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+/**
+ * Tests for {@link JsonSimpleJsonParser}.
+ *
+ * @author Dave Syer
+ */
+public class JsonSimpleJsonParserTests extends AbstractJsonParserTests {
 
-import org.springframework.context.annotation.ComponentScan;
-
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-@ComponentScan
-public @interface MetaComponentScan {
+	@Override
+	protected JsonParser getParser() {
+		return new JsonSimpleJsonParser();
+	}
 
 }

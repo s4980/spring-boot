@@ -323,7 +323,7 @@ https://boxfuse.com/docs/payloads/springboot.html#configuration
 [`application-boxfuse.properties`]
 file, Boxfuse will base its configuration based on the properties it contains.
 
-At this point `boxfuse` will start create an image for your application, upload it,
+At this point `boxfuse` will create an image for your application, upload it,
 and then configure and start the necessary resources on AWS:
 
 [indent=0,subs="verbatim,quotes,attributes"]
@@ -350,7 +350,7 @@ and then configure and start the necessary resources on AWS:
 Your application should now be up and running on AWS.
 
 There's a blog on https://boxfuse.com/blog/spring-boot-ec2.html[deploying Spring Boot apps
-on EC2] as well as well as https://boxfuse.com/docs/payloads/springboot.html[documentation
+on EC2] as well as https://boxfuse.com/docs/payloads/springboot.html[documentation
 for the Boxfuse Spring Boot integration] on their website that will get you started with a
 Maven build to run the app.
 
@@ -536,7 +536,7 @@ the `embeddedLaunchScriptProperties` option of the Spring Boot Maven or Gradle p
 
 |`initInfoProvides`
 |The `Provides` section of "`INIT INFO`". Defaults to `spring-boot-application` for Gradle
-and to `${project.artifactId}` for Maven.
+ and to `${project.artifactId}` for Maven.
 
 |`initInfoShortDescription`
 |The `Short-Description` section of "`INIT INFO`". Defaults to `Spring Boot Application`
@@ -544,8 +544,16 @@ for Gradle and to `${project.name}` for Maven.
 
 |`initInfoDescription`
 |The `Description` section of "`INIT INFO`". Defaults to `Spring Boot Application` for
-Gradle and to `${project.description}` (falling back to `${project.name}`) for Maven.
+ Gradle and to `${project.description}` (falling back to `${project.name}`) for Maven.
+
+|`initInfoChkconfig`
+|The `chkconfig` section of "`INIT INFO`". Defaults to `2345 99 01`.
+
+|`useStartStopDaemon`
+|If the start-stop command should be used to control the process when it's available.
+ Defaults to `true`.
 |===
+
 
 
 [[deployment-script-customization-conf-file]]

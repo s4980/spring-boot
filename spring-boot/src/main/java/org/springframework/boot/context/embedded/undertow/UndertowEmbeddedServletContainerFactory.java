@@ -89,6 +89,7 @@ import org.springframework.util.ResourceUtils;
  * @author Ivan Sopov
  * @author Andy Wilkinson
  * @author Marcos Barbero
+ * @author Eddú Meléndez
  * @since 1.2.0
  * @see UndertowEmbeddedServletContainer
  */
@@ -219,8 +220,7 @@ public class UndertowEmbeddedServletContainerFactory
 		DeploymentManager manager = createDeploymentManager(initializers);
 		int port = getPort();
 		Builder builder = createBuilder(port);
-		return new UndertowEmbeddedServletContainer(builder, manager, getContextPath(),
-				port, this.useForwardHeaders, port >= 0, getCompression());
+		return getUndertowEmbeddedServletContainer(builder, manager, port);
 	}
 
 	private Builder createBuilder(int port) {
@@ -384,7 +384,7 @@ public class UndertowEmbeddedServletContainerFactory
 		try {
 			createAccessLogDirectoryIfNecessary();
 			AccessLogReceiver accessLogReceiver = new DefaultAccessLogReceiver(
-					createWorker(), this.accessLogDirectory, "access_log");
+					createWorker(), this.accessLogDirectory, "access_log.");
 			String formatString = (this.accessLogPattern != null) ? this.accessLogPattern
 					: "common";
 			return new AccessLogHandler(handler, accessLogReceiver, formatString,
@@ -427,8 +427,7 @@ public class UndertowEmbeddedServletContainerFactory
 	}
 
 	private ResourceManager getDocumentRootResourceManager() {
-		File root = getValidDocumentRoot();
-		root = (root != null ? root : createTempDir("undertow-docbase"));
+		File root = getCanonicalDocumentRoot();
 		if (root.isDirectory()) {
 			return new FileResourceManager(root, 0);
 		}
@@ -436,6 +435,23 @@ public class UndertowEmbeddedServletContainerFactory
 			return new JarResourceManager(root);
 		}
 		return ResourceManager.EMPTY_RESOURCE_MANAGER;
+	}
+
+	/**
+	 * Return the document root in canonical form. Undertow uses File#getCanonicalFile()
+	 * to determine whether a resource has been requested using the proper case but on
+	 * Windows {@code java.io.tmpdir} may be set as a tilde-compressed pathname.
+	 * @return the canonical document root
+	 */
+	private File getCanonicalDocumentRoot() {
+		try {
+			File root = getValidDocumentRoot();
+			root = (root != null ? root : createTempDir("undertow-docbase"));
+			return root.getCanonicalFile();
+		}
+		catch (IOException e) {
+			throw new IllegalStateException("Cannot get canonical document root", e);
+		}
 	}
 
 	private void configureErrorPages(DeploymentInfo servletBuilder) {
@@ -476,7 +492,8 @@ public class UndertowEmbeddedServletContainerFactory
 	protected UndertowEmbeddedServletContainer getUndertowEmbeddedServletContainer(
 			Builder builder, DeploymentManager manager, int port) {
 		return new UndertowEmbeddedServletContainer(builder, manager, getContextPath(),
-				port, port >= 0, getCompression());
+				port, isUseForwardHeaders(), port >= 0, getCompression(),
+				getServerHeader());
 	}
 
 	@Override
@@ -518,6 +535,10 @@ public class UndertowEmbeddedServletContainerFactory
 
 	public boolean isAccessLogEnabled() {
 		return this.accessLogEnabled;
+	}
+
+	protected final boolean isUseForwardHeaders() {
+		return this.useForwardHeaders;
 	}
 
 	/**
